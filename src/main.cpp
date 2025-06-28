@@ -1,47 +1,34 @@
 #include "utils/logger.h"
-#include <coreinit/filesystem.h>
+#include <coreinit/bsp.h>
+#include <mocha/mocha.h>
 #include <wups.h>
 #include <wups/button_combo/api.h>
-#include <wups/config/WUPSConfigCategory.h>
-#include <wups/config/WUPSConfigItemBoolean.h>
 #include <wups/config/WUPSConfigItemButtonCombo.h>
-#include <wups/config/WUPSConfigItemIntegerRange.h>
-#include <wups/config/WUPSConfigItemMultipleValues.h>
-#include <wups/config/WUPSConfigItemStub.h>
-#include <wups/config_api.h>
 
 #include <forward_list>
 
 #include <malloc.h>
 
-/**
-    Mandatory plugin information.
-    If not set correctly, the loader will refuse to use the plugin.
-**/
-WUPS_PLUGIN_NAME("Example plugin C++");
-WUPS_PLUGIN_DESCRIPTION("This is just an example plugin written in C++");
-WUPS_PLUGIN_VERSION("v1.0");
-WUPS_PLUGIN_AUTHOR("Maschell");
-WUPS_PLUGIN_LICENSE("BSD");
+WUPS_PLUGIN_NAME("EjectDisc");
+WUPS_PLUGIN_DESCRIPTION("Adds a bind to eject the current game disc.");
+WUPS_PLUGIN_VERSION("v1.0.0");
+WUPS_PLUGIN_AUTHOR("Lynx64, acikek");
+WUPS_PLUGIN_LICENSE("GPLv3");
 
-#define LOG_FS_OPEN_CONFIG_ID             "logFSOpen"
+#define BUTTON_COMBO_CONFIG_ID "buttonCombo"
+
+/*#define LOG_FS_OPEN_CONFIG_ID             "logFSOpen"
 #define BUTTON_COMBO_PRESS_DOWN_CONFIG_ID "pressDownItem"
 #define BUTTON_COMBO_HOLD_CONFIG_ID       "holdItem"
 #define OTHER_EXAMPLE_BOOL_CONFIG_ID      "otherBoolItem"
 #define OTHER_EXAMPLE2_BOOL_CONFIG_ID     "other2BoolItem"
 #define INTEGER_RANGE_EXAMPLE_CONFIG_ID   "intRangeExample"
-#define MULTIPLE_VALUES_EXAMPLE_CONFIG_ID "multValueExample"
+#define MULTIPLE_VALUES_EXAMPLE_CONFIG_ID "multValueExample"*/
 
-/**
-    All of this defines can be used in ANY file.
-    It's possible to split it up into multiple files.
+WUPS_USE_WUT_DEVOPTAB();
+WUPS_USE_STORAGE("eject_disc");
 
-**/
-
-WUPS_USE_WUT_DEVOPTAB();                // Use the wut devoptabs
-WUPS_USE_STORAGE("example_plugin_cpp"); // Unique id for the storage api
-
-enum ExampleOptions {
+/*enum ExampleOptions {
     EXAMPLE_OPTION_1 = 0,
     EXAMPLE_OPTION_2 = 1,
     EXAMPLE_OPTION_3 = 2,
@@ -53,20 +40,24 @@ enum ExampleOptions {
 
 bool sLogFSOpen                    = LOF_FS_OPEN_DEFAULT_VALUE;
 int sIntegerRangeValue             = INTEGER_RANGE_DEFAULT_VALUE;
-ExampleOptions sExampleOptionValue = MULTIPLE_VALUES_DEFAULT_VALUE;
+ExampleOptions sExampleOptionValue = MULTIPLE_VALUES_DEFAULT_VALUE;*/
 
 static std::forward_list<WUPSButtonComboAPI::ButtonCombo> sButtonComboInstances;
 
-static WUPSButtonCombo_ComboHandle sPressDownExampleHandle(nullptr);
-static WUPSButtonCombo_ComboHandle sHoldExampleHandle(nullptr);
+//static WUPSButtonCombo_ComboHandle sPressDownExampleHandle(nullptr);
+//static WUPSButtonCombo_ComboHandle sHoldExampleHandle(nullptr);
 
-WUPSButtonCombo_Buttons DEFAULT_PRESS_DOWN_BUTTON_COMBO = WUPS_BUTTON_COMBO_BUTTON_L | WUPS_BUTTON_COMBO_BUTTON_R;
-WUPSButtonCombo_Buttons DEFAULT_PRESS_HOLD_COMBO        = WUPS_BUTTON_COMBO_BUTTON_L | WUPS_BUTTON_COMBO_BUTTON_R | WUPS_BUTTON_COMBO_BUTTON_DOWN;
+//WUPSButtonCombo_Buttons DEFAULT_PRESS_DOWN_BUTTON_COMBO = WUPS_BUTTON_COMBO_BUTTON_L | WUPS_BUTTON_COMBO_BUTTON_R;
+//WUPSButtonCombo_Buttons DEFAULT_PRESS_HOLD_COMBO        = WUPS_BUTTON_COMBO_BUTTON_L | WUPS_BUTTON_COMBO_BUTTON_R | WUPS_BUTTON_COMBO_BUTTON_DOWN;
+
+static WUPSButtonCombo_ComboHandle sEjectHandle(nullptr);
+
+WUPSButtonCombo_Buttons DEFAULT_BUTTON_COMBO = WUPS_BUTTON_COMBO_BUTTON_STICK_L | WUPS_BUTTON_COMBO_BUTTON_STICK_R;
 
 /**
  * Callback that will be called if the config has been changed
  */
-void boolItemChanged(ConfigItemBoolean *item, bool newValue) {
+/*void boolItemChanged(ConfigItemBoolean *item, bool newValue) {
     DEBUG_FUNCTION_LINE_INFO("New value in boolItemChanged: %d", newValue);
     if (std::string_view(LOG_FS_OPEN_CONFIG_ID) == item->identifier) {
         sLogFSOpen = newValue;
@@ -97,7 +88,7 @@ void multipleValueItemChanged(ConfigItemIntegerRange *item, uint32_t newValue) {
         // If the value has changed, we store it in the storage.
         WUPSStorageAPI::Store(item->identifier, sExampleOptionValue);
     }
-}
+}*/
 
 void buttonComboItemChanged(ConfigItemButtonCombo *item, uint32_t newValue) {
     DEBUG_FUNCTION_LINE_INFO("New value in buttonComboItemChanged: %d for %s", newValue, item->identifier);
@@ -111,7 +102,7 @@ WUPSConfigAPICallbackStatus ConfigMenuOpenedCallback(WUPSConfigCategoryHandle ro
     // To use the Config API without exception see the example below this try/catch block.
     try {
         // Then we can simply create a new category
-        auto functionPatchesCat = WUPSConfigCategory::Create("function patches");
+        /*auto functionPatchesCat = WUPSConfigCategory::Create("function patches");
 
         // Add a boolean item to this newly created category
         functionPatchesCat.add(WUPSConfigItemBoolean::Create(LOG_FS_OPEN_CONFIG_ID, "Log FSOpen calls",
@@ -134,19 +125,20 @@ WUPSConfigAPICallbackStatus ConfigMenuOpenedCallback(WUPSConfigCategoryHandle ro
         root.add(WUPSConfigItemIntegerRange::Create(INTEGER_RANGE_EXAMPLE_CONFIG_ID, "Item for selecting an integer between 0 and 50",
                                                     INTEGER_RANGE_DEFAULT_VALUE, sIntegerRangeValue,
                                                     0, 50,
-                                                    &integerRangeItemChanged));
+                                                    &integerRangeItemChanged));*/
 
         // To change a button combo, we can use the ButtonCombo ConfigItem
-        root.add(WUPSConfigItemButtonCombo::Create(BUTTON_COMBO_PRESS_DOWN_CONFIG_ID, "Press Down button combo",
-                                                   DEFAULT_PRESS_DOWN_BUTTON_COMBO, sPressDownExampleHandle,
+        root.add(WUPSConfigItemButtonCombo::Create(BUTTON_COMBO_CONFIG_ID, "Eject",
+                                                   DEFAULT_BUTTON_COMBO, sEjectHandle,
                                                    buttonComboItemChanged));
-        root.add(WUPSConfigItemButtonCombo::Create(BUTTON_COMBO_HOLD_CONFIG_ID, "Hold button combo",
+
+        /*root.add(WUPSConfigItemButtonCombo::Create(BUTTON_COMBO_HOLD_CONFIG_ID, "Hold button combo",
                                                    DEFAULT_PRESS_HOLD_COMBO, sHoldExampleHandle,
-                                                   buttonComboItemChanged));
+                                                   buttonComboItemChanged));*/
 
 
         // To select value from an enum WUPSConfigItemMultipleValues fits the best.
-        constexpr WUPSConfigItemMultipleValues::ValuePair possibleValues[] = {
+        /*constexpr WUPSConfigItemMultipleValues::ValuePair possibleValues[] = {
                 {EXAMPLE_OPTION_1, "Option 1"},
                 {EXAMPLE_OPTION_2, "Option 2"},
                 {EXAMPLE_OPTION_3, "Option 3"},
@@ -171,7 +163,7 @@ WUPSConfigAPICallbackStatus ConfigMenuOpenedCallback(WUPSConfigCategoryHandle ro
 
         nc2.add(std::move(nc3));
         nc1.add(std::move(nc2));
-        root.add(std::move(nc1));
+        root.add(std::move(nc1));*/
     } catch (std::exception &e) {
         DEBUG_FUNCTION_LINE_ERR("Creating config menu failed: %s", e.what());
         return WUPSCONFIG_API_CALLBACK_RESULT_ERROR;
@@ -180,7 +172,7 @@ WUPSConfigAPICallbackStatus ConfigMenuOpenedCallback(WUPSConfigCategoryHandle ro
     // In case we don't like exception, we can use the API as well.
     // If we add a "WUPSConfigAPIStatus" reference to the API calls, the function won't throw an exception.
     // Instead, it will return std::optionals and write the result into the WUPSConfigAPIStatus.
-    WUPSConfigAPIStatus err;
+    /*WUPSConfigAPIStatus err;
     auto categoryOpt = WUPSConfigCategory::Create("Just another Category", err);
     if (!categoryOpt) {
         DEBUG_FUNCTION_LINE_ERR("Failed to create category: %s", WUPSConfigAPI_GetStatusStr(err));
@@ -206,13 +198,24 @@ WUPSConfigAPICallbackStatus ConfigMenuOpenedCallback(WUPSConfigCategoryHandle ro
     if (!root.add(std::move(*categoryOpt), err)) {
         DEBUG_FUNCTION_LINE_ERR("Failed to add category to root: %s", WUPSConfigAPI_GetStatusStr(err));
         return WUPSCONFIG_API_CALLBACK_RESULT_ERROR;
-    }
+    }*/
 
     return WUPSCONFIG_API_CALLBACK_RESULT_SUCCESS;
 }
 
 void ConfigMenuClosedCallback() {
     WUPSStorageAPI::SaveStorage();
+}
+
+void giveEjectRequestPpcPermissions() {
+    // entity & attribute struct: https://github.com/NWPlayer123/IOSU/blob/master/ios_bsp/libraries/bsp_entity/include/bsp_entity.h
+    // SMC entity is at 0xE6040D94
+    // SMC attributes array: 0xE6044364
+    uint32_t permissions = 0;
+    // +44 for 2nd attribute (which is EjectRequest), +8 for permissions
+    Mocha_IOSUKernelRead32(0xE6044364 + 44 + 8, &permissions);
+    // by default EjectRequest has perms 0xFF (BSP_PERMISSIONS_IOS)
+    Mocha_IOSUKernelWrite32(0xE6044364 + 44 + 8, permissions | 0xF00); // BSP_PERMISSIONS_PPC_USER
 }
 
 /**
@@ -223,18 +226,18 @@ INITIALIZE_PLUGIN() {
     initLogging();
     DEBUG_FUNCTION_LINE("INITIALIZE_PLUGIN of example_plugin!");
 
-    WUPSConfigAPIOptionsV1 configOptions = {.name = "example_plugin_cpp"};
+    WUPSConfigAPIOptionsV1 configOptions = {.name = "eject_disc"};
     if (WUPSConfigAPI_Init(configOptions, ConfigMenuOpenedCallback, ConfigMenuClosedCallback) != WUPSCONFIG_API_RESULT_SUCCESS) {
         DEBUG_FUNCTION_LINE_ERR("Failed to init config api");
     }
 
-    WUPSStorageError storageRes;
+    /*WUPSStorageError storageRes;
     if ((storageRes = WUPSStorageAPI::GetOrStoreDefault(LOG_FS_OPEN_CONFIG_ID, sLogFSOpen, LOF_FS_OPEN_DEFAULT_VALUE)) != WUPS_STORAGE_ERROR_SUCCESS) {
         DEBUG_FUNCTION_LINE_ERR("GetOrStoreDefault failed: %s (%d)", WUPSStorageAPI_GetStatusStr(storageRes), storageRes);
     }
     if ((storageRes = WUPSStorageAPI::SaveStorage()) != WUPS_STORAGE_ERROR_SUCCESS) {
         DEBUG_FUNCTION_LINE_ERR("GetOrStoreDefault failed: %s (%d)", WUPSStorageAPI_GetStatusStr(storageRes), storageRes);
-    }
+    }*/
 
     // To register a button combo, we can use the C++ wrapper class "WUPSButtonComboAPI::ButtonCombo".
     // The combo will be added on construction of that wrapper, and removed again in the destructor. Use `std::move` to move it around.
@@ -246,10 +249,14 @@ INITIALIZE_PLUGIN() {
         // Create a button combo which detects if a combo has been pressed down on any controller.
         // This version will check for conflicts. It's useful to check for conflicts if you want to use that button combo for a global unique thing
         // that's always possible, like taking screenshots.
-        WUPSButtonComboAPI::ButtonCombo buttonComboPressDown = WUPSButtonComboAPI::CreateComboPressDown(
-                "Example Plugin: Press Down test",
-                DEFAULT_PRESS_DOWN_BUTTON_COMBO, // L + R
+        WUPSButtonComboAPI::ButtonCombo ejectCombo = WUPSButtonComboAPI::CreateComboHold(
+                "EjectDisc: Eject",
+                DEFAULT_BUTTON_COMBO,
+                500,
                 [](const WUPSButtonCombo_ControllerTypes triggeredBy, WUPSButtonCombo_ComboHandle, void *) {
+                    giveEjectRequestPpcPermissions();
+                    uint32_t request = 1;
+                    bspWrite("SMC", 0, "EjectRequest", 4, &request);
                     DEBUG_FUNCTION_LINE_INFO("Button combo has been pressed down by controller %s", WUPSButtonComboAPI::GetControllerTypeStr(triggeredBy));
                 },
                 nullptr,
@@ -268,10 +275,10 @@ INITIALIZE_PLUGIN() {
                 break;
         }
         // We want to save the handle, so we can use it for the config menu
-        sPressDownExampleHandle = buttonComboPressDown.getHandle();
+        sEjectHandle = ejectCombo.getHandle();
         // BUT. We need to make sure to keep that button combo instance. Otherwise, the combo will be removed.
         // We save it in this list, which gets cleared in DEINITIALIZE_PLUGIN
-        sButtonComboInstances.emplace_front(std::move(buttonComboPressDown));
+        sButtonComboInstances.emplace_front(std::move(ejectCombo));
 
         // --------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -279,7 +286,7 @@ INITIALIZE_PLUGIN() {
         // E.g. when a new Aroma update is detected, the updater can be launched by holding the PLUS button. This should always be possible.
 
         // If we don't want to check for conflicts, we need to create a "PressDownObserver"
-        WUPSButtonComboAPI::ButtonCombo buttonComboPressDownObserver = WUPSButtonComboAPI::CreateComboPressDownObserver(
+        /*WUPSButtonComboAPI::ButtonCombo buttonComboPressDownObserver = WUPSButtonComboAPI::CreateComboPressDownObserver(
                 "Example Plugin: Press Down observer test",
                 DEFAULT_PRESS_DOWN_BUTTON_COMBO, // L + R Even though this is same combo as in buttonComboPressDown an observer will ignore conflicts.
                 [](const WUPSButtonCombo_ControllerTypes triggeredBy, WUPSButtonCombo_ComboHandle, void *) {
@@ -289,7 +296,7 @@ INITIALIZE_PLUGIN() {
                 comboStatus); // comboStatus will always be WUPS_BUTTON_COMBO_COMBO_STATUS_VALID for observers.
 
         // Let's move this instance into the list as well. But in this case we don't need the handle
-        sButtonComboInstances.emplace_front(std::move(buttonComboPressDownObserver));
+        sButtonComboInstances.emplace_front(std::move(buttonComboPressDownObserver));*/
 
         // --------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -297,7 +304,7 @@ INITIALIZE_PLUGIN() {
 
         // Let's create a button combo which will lead to a conflict. This time we want to check if a combo has been hold for 500ms. Conflicts are checked across
         // non-observer combo types.
-        WUPSButtonComboAPI::ButtonCombo buttonComboHold = WUPSButtonComboAPI::CreateComboHold(
+        /*WUPSButtonComboAPI::ButtonCombo buttonComboHold = WUPSButtonComboAPI::CreateComboHold(
                 "Example Plugin: Hold test",
                 DEFAULT_PRESS_HOLD_COMBO, // L+R+DPAD+DOWN. This combo includes the combo "L+R" of the buttonComboPressDown, so this will lead to a conflict.
                 500,                      // We need to hold that combo for 500ms
@@ -317,11 +324,11 @@ INITIALIZE_PLUGIN() {
             default:
                 DEBUG_FUNCTION_LINE_ERR("Invalid combo status");
                 break;
-        }
+        }*/
 
         // Once combo is in the "WUPS_BUTTON_COMBO_COMBO_STATUS_CONFLICT" state it can only be valid again, if the combo or the controllerMask changes. Other combo won't ever affect this state of this combo
         // We can easily update the button combo
-        if (const auto res = buttonComboHold.UpdateButtonCombo(WUPS_BUTTON_COMBO_BUTTON_ZR | WUPS_BUTTON_COMBO_BUTTON_R | WUPS_BUTTON_COMBO_BUTTON_DOWN, comboStatus); res != WUPS_BUTTON_COMBO_ERROR_SUCCESS) {
+        /*if (const auto res = buttonComboHold.UpdateButtonCombo(WUPS_BUTTON_COMBO_BUTTON_ZR | WUPS_BUTTON_COMBO_BUTTON_R | WUPS_BUTTON_COMBO_BUTTON_DOWN, comboStatus); res != WUPS_BUTTON_COMBO_ERROR_SUCCESS) {
             DEBUG_FUNCTION_LINE_INFO("Failed to update button combo");
         } else {
             DEBUG_FUNCTION_LINE_INFO("Updated button combo");
@@ -337,19 +344,19 @@ INITIALIZE_PLUGIN() {
                     DEBUG_FUNCTION_LINE_ERR("Invalid combo status");
                     break;
             }
-        }
+        }*/
 
         // We want to save the handle, so we can use it for the config menu
-        sHoldExampleHandle = buttonComboHold.getHandle();
+        /*sHoldExampleHandle = buttonComboHold.getHandle();
         // Let's move this instance into the list as well. But in this case we don't need the handle
-        sButtonComboInstances.emplace_front(std::move(buttonComboHold));
+        sButtonComboInstances.emplace_front(std::move(buttonComboHold));*/
 
         // --------------------------------------------------------------------------------------------------------------------------------------------------
 
         // If we want to create combo for only a specific controller (or specific controllers), we have to use the "Ex" functions.
 
         // If we don't want to check for conflicts, we need to create a "PressDownObserver", but this time we have to provide a controllerMask and if it's a observer.
-        WUPSButtonComboAPI::ButtonCombo buttonComboPressDownExObserver = WUPSButtonComboAPI::CreateComboPressDownEx(
+        /*WUPSButtonComboAPI::ButtonCombo buttonComboPressDownExObserver = WUPSButtonComboAPI::CreateComboPressDownEx(
                 "Example Plugin: Press Down observer test",
                 WUPS_BUTTON_COMBO_CONTROLLER_WPAD_0, // Define which controllers should be checked. Could be something (WUPS_BUTTON_COMBO_CONTROLLER_WPAD_0 | WUPS_BUTTON_COMBO_CONTROLLER_VPAD).
                 DEFAULT_PRESS_DOWN_BUTTON_COMBO,     // L + R Even though this is same combo as in buttonComboPressDown an observer will ignore conflicts.
@@ -358,17 +365,17 @@ INITIALIZE_PLUGIN() {
                 },
                 nullptr,
                 true,         // we want an observer
-                comboStatus); // comboStatus will always be WUPS_BUTTON_COMBO_COMBO_STATUS_VALID for observers.
+                comboStatus); // comboStatus will always be WUPS_BUTTON_COMBO_COMBO_STATUS_VALID for observers.*/
 
         // Let's move this instance into the list as well. But in this case we don't need the handle
-        sButtonComboInstances.emplace_front(std::move(buttonComboPressDownExObserver));
+        //sButtonComboInstances.emplace_front(std::move(buttonComboPressDownExObserver));
     } catch (std::exception &e) {
         DEBUG_FUNCTION_LINE_ERR("Caught exception: %s", e.what());
     }
 
 
     // But we can also use the version which doesn't throw any exceptions
-    WUPSButtonCombo_ComboStatus comboStatus;
+    /*WUPSButtonCombo_ComboStatus comboStatus;
     WUPSButtonCombo_Error comboError;
 
     // We add a "WUPSButtonCombo_Error" parameter at the end, the function will not throw any exception, but return a std::optional instead.
@@ -385,7 +392,7 @@ INITIALIZE_PLUGIN() {
     if (buttonComboPressDownObserverOpt && comboError == WUPS_BUTTON_COMBO_ERROR_SUCCESS) {
         // Creating was successful! Let's move it to the list as well.
         sButtonComboInstances.emplace_front(std::move(*buttonComboPressDownObserverOpt));
-    }
+    }*/
 
     deinitLogging();
 }
@@ -404,6 +411,7 @@ DEINITIALIZE_PLUGIN() {
 **/
 ON_APPLICATION_START() {
     initLogging();
+    Mocha_InitLibrary();
 
     DEBUG_FUNCTION_LINE("ON_APPLICATION_START of example_plugin!");
 }
@@ -413,6 +421,7 @@ ON_APPLICATION_START() {
  */
 ON_APPLICATION_ENDS() {
     deinitLogging();
+    Mocha_DeInitLibrary();
 }
 
 /**
@@ -448,13 +457,13 @@ ON_APPLICATION_REQUESTS_EXIT() {
 
     Use this macro for each function you want to override
 **/
-DECL_FUNCTION(int, FSOpenFile, FSClient *pClient, FSCmdBlock *pCmd, const char *path, const char *mode, int *handle, int error) {
+/*DECL_FUNCTION(int, FSOpenFile, FSClient *pClient, FSCmdBlock *pCmd, const char *path, const char *mode, int *handle, int error) {
     int result = real_FSOpenFile(pClient, pCmd, path, mode, handle, error);
     if (sLogFSOpen) {
         DEBUG_FUNCTION_LINE_INFO("FSOpenFile called for folder %s! Result %d", path, result);
     }
     return result;
-}
+}*/
 
 /**
 This tells the loader which functions from which library (.rpl) should be replaced with which function from this file.
@@ -464,4 +473,30 @@ WUPS_MUST_REPLACE(FUNCTION_NAME_IN_THIS_FILE,   NAME_OF_LIB_WHICH_CONTAINS_THIS_
 
 Define this for each function you want to override.
 **/
-WUPS_MUST_REPLACE(FSOpenFile, WUPS_LOADER_LIBRARY_COREINIT, FSOpenFile);
+//WUPS_MUST_REPLACE(FSOpenFile, WUPS_LOADER_LIBRARY_COREINIT, FSOpenFile);
+
+
+void givePpcBspAllClientCredentials() {
+    uint32_t active      = 0;
+    uint32_t permissions = 0;
+    for (uint32_t address = 0xE60471FC; address >= 0xE6047104; address -= 8) {
+        Mocha_IOSUKernelRead32(address, &active);
+        // skip if not active
+        if (active == 0)
+            continue;
+        Mocha_IOSUKernelRead32(address + 4, &permissions);
+        if (permissions == 0xF00) {                       // BSP_PERMISSIONS_PPC_USER
+            Mocha_IOSUKernelWrite32(address + 4, 0xFFFF); // BSP_PERMISSIONS_ALL
+            break;
+        }
+    }
+}
+
+/*void procUiSaveCallback() {
+    OSSavesDone_ReadyToRelease();
+}
+
+// copied from https://github.com/wiiu-env/AromaUpdater/blob/9be5f01ca6b00a09fcaa5f6e46ca00a429539937/source/common.h#L20
+static inline bool runningFromMiiMaker() {
+    return (OSGetTitleID() & 0xFFFFFFFFFFFFF0FFull) == 0x000500101004A000ull;
+}*/

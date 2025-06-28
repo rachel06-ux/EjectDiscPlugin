@@ -1,4 +1,11 @@
+.cache
 .vscode
 build
+
 *.elf
+*.lst
 *.wps
+
+compile_commands.json
+
+Makefile

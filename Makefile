@@ -37,13 +37,13 @@ CXXFLAGS	:= $(CFLAGS) -std=c++20
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map) $(WUPSSPECS) 
 
-LIBS	:= -lwups -lwut 
+LIBS	:= -lwups -lmocha -lwut 
 
 #-------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level
 # containing include and lib
 #-------------------------------------------------------------------------------
-LIBDIRS	:= $(PORTLIBS) $(WUPS_ROOT) $(WUT_ROOT)
+LIBDIRS	:= $(PORTLIBS) $(WUPS_ROOT) $(WUT_ROOT) $(WUT_ROOT)/usr
 
 #-------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
