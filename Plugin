@@ -1,0 +1,39 @@
+name: Build Plugin
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential git python3-pip cmake
+          pip3 install pyyaml
+
+          sudo mkdir -p /opt/devkitpro
+          echo "DEVKITPRO=/opt/devkitpro" >> $GITHUB_ENV
+          echo "DEVKITPPC=/opt/devkitpro/devkitPPC" >> $GITHUB_ENV
+          echo "WUT_ROOT=/opt/devkitpro/wut" >> $GITHUB_ENV
+
+          git clone https://github.com/devkitPro/devkitPPC.git /opt/devkitpro/devkitPPC
+          git clone https://github.com/decaf-emu/wut.git /opt/devkitpro/wut
+
+          cd /opt/devkitpro/devkitPPC && make -j$(nproc)
+          cd /opt/devkitpro/wut && make -j$(nproc)
+
+      - name: Compile Plugin
+        run: make
+
+      - name: Upload Plugin
+        uses: actions/upload-artifact@v3
+        with:
+          name: EjectDiscPlugin.wps
+          path: |
+            *.wps
